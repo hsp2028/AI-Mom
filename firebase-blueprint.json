@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "user": {
+      "title": "User Profile",
+      "description": "User account and profile setup including active role.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the user."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Student", "Professional", "Entrepreneur"],
+          "description": "The active vibe / profile type."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "role"]
+    },
+    "task": {
+      "title": "Task",
+      "description": "A study or work assignment tracked by AI-Mom.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "title", "category", "dueDate", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "user",
+      "description": "User profile document."
+    },
+    "tasks/{taskId}": {
+      "schema": "task",
+      "description": "Collection of tasks."
+    }
+  }
+}

@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Catch-All Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) 
+        && incoming().name is string 
+        && incoming().name.size() <= 100
+        && incoming().role in ['Student', 'Professional', 'Entrepreneur']
+        && (!('emergencyName' in incoming()) || (incoming().emergencyName is string && incoming().emergencyName.size() <= 100))
+        && (!('emergencyPhone' in incoming()) || (incoming().emergencyPhone is string && incoming().emergencyPhone.size() <= 100));
+      allow update: if isOwner(userId)
+        && incoming().name is string
+        && incoming().name.size() <= 100
+        && incoming().role in ['Student', 'Professional', 'Entrepreneur']
+        && (!('emergencyName' in incoming()) || (incoming().emergencyName is string && incoming().emergencyName.size() <= 100))
+        && (!('emergencyPhone' in incoming()) || (incoming().emergencyPhone is string && incoming().emergencyPhone.size() <= 100));
+    }
+
+    // Tasks Collection
+    match /tasks/{taskId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && incoming().userId == request.auth.uid
+        && incoming().title is string 
+        && incoming().title.size() <= 200
+        && incoming().category is string
+        && incoming().category.size() <= 50
+        && incoming().dueDate is string
+        && incoming().status in ['pending', 'completed'];
+
+      allow update: if isSignedIn() 
+        && existing().userId == request.auth.uid
+        && incoming().userId == request.auth.uid
+        && incoming().title is string
+        && incoming().title.size() <= 200
+        && incoming().category is string
+        && incoming().category.size() <= 50
+        && incoming().dueDate is string
+        && incoming().status in ['pending', 'completed'];
+
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}
